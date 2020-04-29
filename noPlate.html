@@ -1,0 +1,303 @@
+<!--
+ * @Author: your name
+ * @Date: 2020-03-13 11:18:44
+ * @LastEditTime: 2020-03-20 17:24:43
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \hndaozha\noPlate.html
+ -->
+<!DOCTYPE html>
+<html lang="en" style="">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0,user-scalable=0,minimum-scale=1.0,maximum-scale=1.0">
+  <meta http-equiv="expires" content="0">
+  <title>车务通</title>
+  <link rel="stylesheet" href="css/index.css">
+  <script src="js/rem.js"></script>
+</head>
+
+<body>
+  <!-- 无牌头部logo -->
+  <div class="logo">
+    <img src="http://iph.href.lu/80x80?text=1" alt="">
+  </div>
+  <!-- 车牌查询 -->
+  <div class="content" style="display: none">
+    <div class="enterText">
+      <p>无牌车入闸请点击下方进场按钮，点击后将起闸放行</p>
+    </div>
+    <div class="query">
+      <button class="btn">进场</button>
+    </div>
+  </div>
+  <!-- 消费金额显示 -->
+  <div class="amount">
+    <ul>
+      <li>
+        <span class="time">进场时间：</span>
+        <span class="timetext text"></span>
+      </li>
+      <li>
+        <span class="time">出场时间：</span>
+        <span class="outtime text"></span>
+      </li>
+      <li>
+        <span class="duration">已停时长：</span>
+        <span class="durationtext text"></span>
+      </li>
+      <li>
+        <span class="money">已消费金额：</span>
+        <span class="moneytext text"></span>
+      </li>
+    </ul>
+    <button class="paycost">缴费离场</button>
+  </div>
+  <!-- 缴费结果查询页面 -->
+  <div class="is_success" style="display: none">
+    <img src="img/jiazai.png" alt="">
+    <span>正在查询支付结果，请稍等...</span>
+  </div>
+  <!-- 缴费成功页面 -->
+  <div class="successto" style="display:none">
+    <img src="img/chenggong.png" alt="">
+    <span>缴费成功，请及时离场</span>
+  </div>
+  <!-- 遮罩层 -->
+  <div class="mask" style="display: none">
+    <div class="maskPlate">
+      <span class="errPlate">请使用微信或支付宝扫描二维码</span>
+    </div>
+  </div>
+</body>
+<script src="js/jquery-3.4.0.min.js"></script>
+<script src="https://gw.alipayobjects.com/as/g/h5-lib/alipayjsapi/3.1.1/alipayjsapi.inc.min.js"></script>
+<script>
+  if (!isMobile()) {
+    $(".errPlate").text("请使用微信或支付宝扫描二维码");
+    $(".errPlateBtn").remove();
+    $(".mask").show();
+  }
+  if (isMobile() && !isWeiXin() && !isAlipay()) {
+    $(".errPlate").text("请使用微信或支付宝扫描二维码");
+    $(".errPlateBtn").remove();
+    $(".mask").show();
+  }
+  console.log(window.navigator.userAgent)
+
+  function isMobile() {
+    var ua = window.navigator.userAgent;
+    if (!!ua.match(/AppleWebKit.*Mobile.*/)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  function isWeiXin() {
+    var ua = window.navigator.userAgent.toLowerCase();
+    if (ua.match(/MicroMessenger/i) == 'micromessenger') {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  function isAlipay() {
+    var userAgent = window.navigator.userAgent.toLowerCase();
+    if (userAgent.match(/Alipay/i) == "alipay") {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  var source = "wxjs";
+  var code = ''
+  var total_fee = '' //消费金额
+  var orderNo = '' //订单编号
+  var isLogin = false
+  let loading = false
+  var carNum = ''
+  const parkParmas = window.localStorage.getItem('parkParmas')
+  // const baseUrl = 'http://server.natappfree.cc:44557'
+  const baseUrl = 'https://cwt.hainanpost.cn'
+  const url_enter = baseUrl + '/parking/wy/pay/noPlateQRcode' //车费查询接口
+  const url_pay = baseUrl + '/parking/wy/pay/payCode' //支付接口
+
+  // 时间补0
+  function add (params) {
+    return params < 10? `0${params}` : params
+  }
+  // 时间戳转日期
+  function format (value) {
+    const time=new Date(value)
+    const y=time.getFullYear()
+    const m=time.getMonth() + 1
+    const d=time.getDate()
+    const h=time.getHours()
+    const mm=time.getMinutes()
+    const s=time.getSeconds()
+    return `${y}-${add(m)}-${add(d)} ${add(h)}:${add(mm)}:${add(s)}`
+  }
+  //计算停车时长
+  function parkTime (start, end) {
+    const time=end - start
+    var seconds=Math.ceil(time/1000)
+    if (seconds <=60) {
+      text=seconds + '秒'
+    } else if (seconds> 60 && seconds <= 3600) {
+      text=parseInt(seconds / 60) + '分钟' + (seconds % 60) + '秒'
+    } else {
+      text=parseInt(seconds / 3600) + '小时' + parseInt((seconds % 3600) / 60) + '分钟' + (seconds % 60) + '秒'
+    }
+    return text
+  }
+
+  $(function () {
+    function parse_url(url) { //定义函数
+      var pattern = /(\w+)=(\w+)/ig; //定义正则表达式
+      var parames = {}; //定义数组
+      url.replace(pattern, function (a, b, c) {
+        parames[b] = c;
+      });
+      return parames; //返回这个数组.
+    }
+    //获取当前url 取到code
+    var url = window.location.href;
+    var params = parse_url(url);
+    //params.code 就是当前的code
+    isLogin = true
+    code = params.code
+    console.log(parkParmas)
+    if (isWeiXin()) {
+      source = "wxjs";
+    } else if (isAlipay()) {
+      source = "alipayjs";
+    } else {
+      $(".errPlate").text("请使用微信或支付宝扫描二维码")
+      $(".errPlateBtn").remove()
+      $(".mask").show()
+      $('.content').show()
+      $('.amount').hide()
+      // return
+    }
+    if (parkParmas.executeStatus == 0) {
+      $('.content').show()
+      $('.amount').hide()
+    } else {
+      $('.content').hide()
+      $('.amount').show()
+      $.ajax({
+        type: "post",
+        url: url_enter,
+        data: {
+          code: code,
+          // code: '011cTQvG0ms1Gf2m0vxG0jOqvG0cTQvE',
+          executeStatus: 1,
+          parkingId: parkParmas.parkingId,
+          // parkingId: '4901744784509248392',
+          passId: parkParmas.passId
+          // passId: '5560192390043347888'
+        },
+        success: function (res) {
+          const data = JSON.parse(res)
+          console.log(data)
+          if (data.success && data.msg != '通道没有车!') {
+            const msg = JSON.parse(data.msg)
+            console.log(msg)
+            $('.timetext').html(format(msg.startDate))
+            $('.outtime').html(format(msg.endDate))
+            $('.durationtext').html(parkTime(msg.startDate, msg.endDate))
+            $('.moneytext').html(`${msg.receivable}元`)
+            orderNo = msg.recordId
+          } else {
+            $(".errPlate").text(data.msg)
+            $(".errPlateBtn").remove()
+            $(".mask").show()
+          }
+        }
+      })
+    }
+  },
+  // 点击蒙层关闭蒙层
+  $('.mask').click(function () {
+    $(".mask").hide()
+  }),
+  // 无牌车进场
+  $('.btn').click(function(){
+    if (loading) {
+      return
+    } else {
+      loading = true
+      $.ajax({
+        type: "post",
+        url: url_enter,
+        data: {
+          code: code,
+          // code: '071jo3og2aKhWG0lUSpg2HfRng2jo3oD',
+          parkingId: parkParmas.parkingId,
+          // parkingId: '4901744784509248392',
+          passId: parkParmas.passId,
+          // passId: '4781146054128251649',
+          executeStatus: 0
+        },
+        success: (res) => {
+          const data = JSON.parse(res)
+          console.log(data)
+          if (data.success) {
+            $(".errPlate").html(data.msg)
+            $(".mask").show()
+          } else {
+            $(".errPlate").html(data.msg)
+            $(".mask").show()
+            isEmpty = false
+            return false
+          }
+          loading = false
+        }
+      })
+    }
+  }),
+  // 缴费离场事件
+  $('.paycost').click(function () {
+    if (loading) {
+      return
+    } else {
+      loading = true
+      let type
+      if (isWeiXin()) {
+        type = 2
+      }
+      if (isAlipay()) {
+        type = 1
+      }
+      $.ajax({
+        type: "post",
+        url: url_pay,
+        data: {
+          orderNo: orderNo,
+          type: type,
+          busId: '1001262519'
+        },
+        success: function (res) {
+          const data = JSON.parse(res)
+          const msg = JSON.parse(data.msg)
+          console.log(msg)
+          if (data.success) {
+            // window.location.href = msg.d.qr
+          } else {
+            $(".errPlate").text(data.msg)
+            $(".errPlateBtn").remove()
+            $(".mask").show()
+          }
+          isLoading = false
+        }
+      })
+    }
+  })
+)
+</script>
+
+</html>
