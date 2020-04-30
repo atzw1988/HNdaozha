@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-05-31 09:00:42
- * @LastEditTime: 2020-04-29 17:43:47
+ * @LastEditTime: 2020-04-30 11:13:08
  * @LastEditors: Please set LastEditors
  -->
 <!DOCTYPE html>
@@ -244,8 +244,8 @@
   // const baseUrl = 'http://server.natappfree.cc:42749'
   const baseUrl = 'https://cwt.hainanpost.cn'
   // const baseUrl = 'http://pug9qb.natappfree.cc/parking'
-  const url_query = baseUrl + '/parktest/wy/pay/plateOut' //车费查询接口
-  const url_weixin_pay = baseUrl + '/parktest/wy/pay/payCode' //支付接口
+  const url_query = baseUrl + '/parking/wy/pay/plateOut' //车费查询接口
+  const url_pay = baseUrl + '/parking/wy/pay/payCode' //支付接口
 
   // 时间补0
   function add (params) {
@@ -352,8 +352,12 @@
               $('.moneytext').html(`${msg.receivable}元`)
               orderNo = msg.recordId
             } else {
-              $(".errPlate").html(data.msg)
+              $(".errPlate").html(`没有查询到${carNum}停车信息`)
               $(".mask").show()
+              setTimeout(() => {
+                $('.content').show()
+                $('.amount').hide()
+              }, 1000)
               return false
             }
           }
@@ -418,7 +422,7 @@
             $('.moneytext').html(`${msg.receivable}元`)
             orderNo = msg.recordId
           } else {
-            $(".errPlate").html(data.msg)
+            $(".errPlate").html(`没有查询到${carNum}停车信息`)
             $(".mask").show()
             isEmpty = false
             return false
@@ -532,7 +536,7 @@
         isLoading = true
         $.ajax({
           type: "post",
-          url: url_weixin_pay,
+          url: url_pay,
           contentType: "application/json",
           dataType: "json",
           data: JSON.stringify(data),
@@ -543,7 +547,7 @@
             const msg = JSON.parse(res.msg)
             console.log(msg)
             if (msg.d) {
-              // window.location.href = msg.d.qr
+              window.location.href = msg.d.qr
             } else {
               $(".errPlate").html(msg.m)
               $(".mask").show()
