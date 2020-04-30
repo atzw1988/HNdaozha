@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-03-13 11:18:44
- * @LastEditTime: 2020-04-30 17:13:13
+ * @LastEditTime: 2020-04-30 17:35:56
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \hndaozha\noPlate.html
@@ -120,7 +120,7 @@
   var isLogin = false
   let loading = false
   var carNum = ''
-  const parkParmas = window.localStorage.getItem('parkParmas')
+  
   // const baseUrl = 'http://server.natappfree.cc:44557'
   const baseUrl = 'https://cwt.hainanpost.cn'
   const url_enter = baseUrl + '/parking/wy/pay/noPlateQRcode' //车费查询接口
@@ -170,6 +170,7 @@
     //params.code 就是当前的code
     isLogin = true
     code = params.code
+    const parkParmas = JSON.parse(window.localStorage.getItem('parkParmas'))
     console.log(parkParmas)
     if (isWeiXin()) {
       source = "wxjs";

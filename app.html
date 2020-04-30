@@ -76,8 +76,8 @@
     const url = window.location.href
     const parkParmas = parseQuery(url)
     console.log(parkParmas)
-    window.localStorage.setItem('parkParmas', parkParmas)
-    console.log(isMobile(), isWeiXin(), isAlipay())
+    window.localStorage.setItem('parkParmas', JSON.stringify(parkParmas))
+    console.log(JSON.parse(window.localStorage.getItem('parkParmas')))
     if (isWeiXin()) {
       if (parkParmas.executeStatus == 0 || parkParmas.executeStatus == 1) {
         source = "wxjs"
@@ -88,11 +88,14 @@
         window.location.href = 'https://cwt.hainanpost.cn/pay/index.html'
       }
     } else if (isAlipay()) {
-      source = "alipayjs";
-      window.location.href = 'https://cwt.hainanpost.cn/pay/index.html'
-      // $(".errPlate").text("请使用微信扫描二维码");
-      // $(".errPlateBtn").remove();
-      // $(".mask").show();
+      if (parkParmas.executeStatus) {
+        $(".errPlate").text("请使用微信扫描二维码");
+        $(".errPlateBtn").remove();
+        $(".mask").show();
+      } else {
+        source = "alipayjs";
+        window.location.href = 'https://cwt.hainanpost.cn/pay/index.html'
+      }
       return
     } else {
       console.log(1)
