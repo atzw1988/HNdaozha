@@ -81,7 +81,7 @@
     if (isWeiXin()) {
       if (parkParmas.executeStatus == 0 || parkParmas.executeStatus == 1) {
         source = "wxjs"
-        var appid = 'wx08551f6139c4b9fb'
+        var appid = 'wxc0777fa16c0313dd'
         var redirect_uri = encodeURIComponent("https://cwt.hainanpost.cn/pay/noPlate.html")
         window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${redirect_uri}&response_type=code&scope=snsapi_base#wechat_redirect`
       } else {
@@ -97,7 +97,7 @@
     } else {
       console.log(1)
       // $(".errPlate").text("请使用微信或支付宝扫描二维码");
-      $(".errPlate").text("请使用微信扫描二维码");
+      $(".errPlate").text("请使用微信或支付宝扫描二维码");
       $(".errPlateBtn").remove();
       $(".mask").show();
       return
