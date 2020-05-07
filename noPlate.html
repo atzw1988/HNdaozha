@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-03-13 11:18:44
- * @LastEditTime: 2020-04-30 17:35:56
+ * @LastEditTime: 2020-05-07 09:14:39
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \hndaozha\noPlate.html
@@ -22,7 +22,7 @@
 <body>
   <!-- 无牌头部logo -->
   <div class="logo">
-    <img src="http://iph.href.lu/80x80?text=1" alt="">
+    <!-- <img src="http://iph.href.lu/80x80?text=1" alt=""> -->
   </div>
   <!-- 车牌查询 -->
   <div class="content" style="display: none">
@@ -195,12 +195,12 @@
         url: url_enter,
         data: {
           code: code,
-          // code: '011cTQvG0ms1Gf2m0vxG0jOqvG0cTQvE',
+          // code: '001qrNxz0uwkVc1JlOwz0IcJxz0qrNxT',
           executeStatus: 1,
-          // parkingId: parkParmas.parkingId,
-          // parkingId: '4901744784509248392',
-          // passId: parkParmas.passId
-          // passId: '5560192390043347888'
+          parkingId: parkParmas.parkingId,
+          // parkingId: '5082129345562126861',
+          passId: parkParmas.passId
+          // passId: '4928423811411262593'
         },
         success: function (res) {
           const data = JSON.parse(res)
@@ -237,11 +237,11 @@
         url: url_enter,
         data: {
           code: code,
-          // code: '071jo3og2aKhWG0lUSpg2HfRng2jo3oD',
-          // parkingId: parkParmas.parkingId,
-          // parkingId: '4901744784509248392',
-          // passId: parkParmas.passId,
-          // passId: '4781146054128251649',
+          // code: '0015sVtB05kKYk2qA1wB0pi1uB05sVtN',
+          parkingId: parkParmas.parkingId,
+          // parkingId: '5082129345562126861',
+          passId: parkParmas.passId,
+          // passId: '5326750988453646064',
           executeStatus: 0
         },
         success: (res) => {
@@ -274,24 +274,27 @@
       if (isAlipay()) {
         type = 1
       }
+      const data = {
+        orderNo: orderNo,
+        type: type,
+        busId: '1001262519'
+      }
       $.ajax({
         type: "post",
         url: url_pay,
-        data: {
-          orderNo: orderNo,
-          type: type,
-          busId: '1001262519'
-        },
+        contentType: "application/json",
+        dataType: "json",
+        data: JSON.stringify(data),
         success: function (res) {
-          const data = JSON.parse(res)
-          const msg = JSON.parse(data.msg)
+          console.log(res)
+          const msg = JSON.parse(res.msg)
           console.log(msg)
-          if (data.success) {
+          if (msg.d) {
             window.location.href = msg.d.qr
           } else {
-            $(".errPlate").text(data.msg)
-            $(".errPlateBtn").remove()
+            $(".errPlate").html(msg.m)
             $(".mask").show()
+            return false
           }
           isLoading = false
         }
